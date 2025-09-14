@@ -57,7 +57,7 @@ if [[ "$IS_GP" == "1" ]]; then
 fi
 
 # Other
-# KERNEL_URL="https://github.com/notfleshka/ProtonPlus-Resurrected"
+# KERNEL_URL=""
 SECONDS=0 # builtin bash timer
 DATE="$(date '+%Y%m%d-%H%M')"
 BUILD_HOST="notfleshka"
