@@ -83,10 +83,10 @@ OUT_DTBO="out/arch/arm64/boot/dts/qcom/atoll-ab-idp.dtb"
 ## Customizable vars
 
 # Kernel Name
-KERNEL_NAME="crdroid-modified"
+KERNEL_NAME=""
 
 # Kernel version
-VER="v1.0"
+VER=""
 
 # Additional notes to add to the zip name
 EXTRA_NOTES=""
@@ -95,16 +95,16 @@ EXTRA_NOTES=""
 USE_CCACHE=1
 
 ## Parse arguments
-DO_CLEANUP=0
-DELETE_LEFTOVERS=0
-DO_CLEAN=0
+DO_CLEANUP=1
+DELETE_LEFTOVERS=1
+DO_CLEAN=1
 DO_MENUCONFIG=0
 IS_RELEASE=0
 DO_REGEN=0
 DO_BASHUP=0
 DO_FLTO=0
 DO_A52Q=0
-DO_A72Q=1
+DO_A72Q=0
 TEST_CHANNEL=1
 TEST_BUILD=1
 LOG_UPLOAD=0
