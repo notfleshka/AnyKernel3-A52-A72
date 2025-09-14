@@ -1,8 +1,8 @@
 # What is this?
 
-It is an universal AnyKernel3 template for Samsung Galaxy A52 and A72 devices. It will most likely work for all kernels for these devices, maybe even for other devices, but not tested. Below is a default AnyKernel3 documentation.
+**It is an universal AnyKernel3 template for Samsung Galaxy A52 and A72 devices. It will most likely work for all kernels for these devices, maybe even for other devices, but not tested. Below is a default AnyKernel3 documentation.**
 
-
+**UPD: Now this also includes build script(`build.sh`) for kernel, all configs are inside the script.**
 
 
 ----------------------------------------------------------------------------------
