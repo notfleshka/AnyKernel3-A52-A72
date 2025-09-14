@@ -195,6 +195,7 @@ ZIP_PATH="$WP/$KERNEL_NAME-$CODENAME-$EXTRA_NOTES-$DATE.zip"
 
 echo -e "\nINFO: Build info:
 - Device: $DEVICE ($CODENAME)
+- Kernel Name: $KERNEL_NAME
 - Linux version: $LINUX_VER
 - Defconfig: $DEFCONFIG
 - Build date: $DATE
