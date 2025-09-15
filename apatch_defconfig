@@ -1,0 +1,9 @@
+# APatch
+CONFIG_KPM=y
+#
+# Samsung securities
+CONFIG_UH=n
+CONFIG_UH_RKP=n
+CONFIG_SECURITY_DEFEX=n
+CONFIG_PROCA=n
+#
