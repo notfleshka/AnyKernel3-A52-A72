@@ -4,7 +4,7 @@
 
 **UPD: Now this also includes build script for kernel, all configs are inside the script. Just put the `build.sh` inside kernel's source, modify configs to your needs and run the script. Simple as that.**
 
-**UPD2: Some people asked how do I add APatch support to Samsung kernels, now in this repo there is an `apatch_defconfig` file which has kernel settings needed for disabling Samsung securities which makes APatch work.**
+**UPD2: Some people asked how do I add APatch support to Samsung kernels, now in this repo there is an `apatch_defconfig` file which has kernel settings needed for disabling Samsung securities which makes APatch work(not in all cases tho!!).**
 
 ----------------------------------------------------------------------------------
 AnyKernel3 - Flashable Zip Template for Kernel Releases with Ramdisk Modifications
