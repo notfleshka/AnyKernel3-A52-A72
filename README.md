@@ -6,6 +6,10 @@
 
 **UPD2: Some people asked how do I add APatch support to Samsung kernels, now in this repo there is an `apatch_defconfig` file which has kernel settings needed for disabling Samsung securities which makes APatch work(not in all cases tho!!).**
 
+**UPD3: I added patch needed to support android 16, it should work on every kernel. To apply it, put the `a16-support.patch` file in the root directory of kernel's sources and write this command:**
+
+```patch -p1 < a16-support.patch```
+
 ----------------------------------------------------------------------------------
 AnyKernel3 - Flashable Zip Template for Kernel Releases with Ramdisk Modifications
 ----------------------------------------------------------------------------------
