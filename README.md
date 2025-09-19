@@ -10,6 +10,12 @@
 
 ```patch -p1 < a16-support.patch```
 
+
+**UPD4: I have added KSU + SuSFS implementation script, to run it, put the `susfs_script.sh` in the root directory of kernel's sources and write these commands:**
+
+```chmod +x susfs_script.sh```
+```./susfs_script.sh```
+
 ----------------------------------------------------------------------------------
 AnyKernel3 - Flashable Zip Template for Kernel Releases with Ramdisk Modifications
 ----------------------------------------------------------------------------------

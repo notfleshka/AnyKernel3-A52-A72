@@ -4,7 +4,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=Universal Kernel Flasher for Samsung Galaxy A52 and A72 by @notfleshka
+kernel.string=Universal Kernel Flasher for Samsung Galaxy A52 and A72 by notfleshka @ telegram
 do.devicecheck=1
 do.modules=0
 do.systemless=1
