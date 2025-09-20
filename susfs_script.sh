@@ -18,7 +18,7 @@ cd KernelSU-Next || { echo "KernelSU-Next directory not found! Exiting."; exit 1
 
 # 3. Download SUSFS patch
 echo "[3/8] Downloading SUSFS patch..."
-curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/sidex15/KernelSU-Next/commit/1e750de25930e875612bbec0410de0088474c00b.patch
+curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/KernelSU-Next/KernelSU-Next/commit/3125c35dcfdf4ccadf3fe58b5dbc584c6bb54233.patch
 
 # 4. Apply SUSFS patch
 echo "[4/8] Applying SUSFS patch..."
