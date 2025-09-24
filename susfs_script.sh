@@ -8,39 +8,53 @@ exec > >(tee -a "$LOGFILE") 2>&1
 echo "===== KSU-Based Root Solutions + SuSFS Installation Script made by ChatGPT :D and fixed by notfleshka @ telegram ====="
 echo "===== Started at $(date) ====="
 
-# Select KSU solution
-echo "Select KSU solution to use:"
-echo "1) KernelSU by rsuntk (recommended)"
-echo "2) KernelSU-Next"
-echo "3) SukiSU Ultra (not recommended)"
-read -p "Enter choice [1-3]: " KSU_CHOICE
+# Ask if user wants to install KSU
+read -p "Do you want to install a KSU solution? [y/N]: " INSTALL_KSU
+if [[ "$INSTALL_KSU" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+    # Select KSU solution
+    echo "Select KSU solution to use:"
+    echo "1) KernelSU by rsuntk (recommended)"
+    echo "2) KernelSU-Next"
+    echo "3) SukiSU Ultra (not recommended)"
+    read -p "Enter choice [1-3]: " KSU_CHOICE
 
-case "$KSU_CHOICE" in
-    1)
-        echo "Running KernelSU by rsuntk setup..."
-        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-legacy
-        ;;
-    2|"")
-        echo "Running KernelSU-Next setup..."
-        curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
-        echo "Entering KernelSU-Next directory..."
-        cd KernelSU-Next || { echo "KernelSU-Next directory not found! Exiting."; exit 1; }
-        echo "Downloading SUSFS patch..."
-        curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/KernelSU-Next/KernelSU-Next/commit/3125c35dcfdf4ccadf3fe58b5dbc584c6bb54233.patch
-        echo "Applying SUSFS patch..."
-        patch -p1 < 0001-Kernel-Implement-SUSFS.patch
-        echo "Returning to parent directory..."
-        cd ..
-        ;;
-    3)
-        echo "Running SukiSU Ultra setup..."
-        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-        ;;
-    *)
-        echo "Invalid choice. Exiting."
-        exit 1
-        ;;
-esac
+    case "$KSU_CHOICE" in
+        1)
+            echo "Running KernelSU by rsuntk setup..."
+            curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-legacy
+            ;;
+        2|"")
+            echo "Running KernelSU-Next setup..."
+            curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+            echo "Entering KernelSU-Next directory..."
+            cd KernelSU-Next || { echo "KernelSU-Next directory not found! Exiting."; exit 1; }
+            echo "Downloading SUSFS patch..."
+            curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/KernelSU-Next/KernelSU-Next/commit/3125c35dcfdf4ccadf3fe58b5dbc584c6bb54233.patch
+            echo "Applying SUSFS patch..."
+            patch -p1 < 0001-Kernel-Implement-SUSFS.patch
+            echo "Returning to parent directory..."
+            cd ..
+            ;;
+        3)
+            echo "Running SukiSU Ultra setup..."
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+            ;;
+        *)
+            echo "Invalid choice. Exiting."
+            exit 1
+            ;;
+    esac
+    echo "KSU Solution($KSU_CHOICE) installation finished."
+else
+    echo "Skipping KSU installation."
+fi
+
+# Ask user if they want to continue to kernel patching
+read -p "Do you want to patch kernel with SuSFS? [y/N]: " CONTINUE_PATCH
+    if [[ ! "$CONTINUE_PATCH" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+        echo "Exiting."
+        exit 0
+    fi
 
 # Clone the SUSFS repo for kernel 4.14
 echo "Cloning SUSFS repository..."
