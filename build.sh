@@ -191,11 +191,12 @@ else
     BUILD_TYPE="Testing"
 fi
 
-ZIP_PATH="$WP/$KERNEL_NAME-$CODENAME-$EXTRA_NOTES-$DATE.zip"
+ZIP_PATH="$WP/$KERNEL_NAME-$CODENAME-$VER-$EXTRA_NOTES-$DATE.zip"
 
 echo -e "\nINFO: Build info:
 - Device: $DEVICE ($CODENAME)
 - Kernel Name: $KERNEL_NAME
+- Kernel Version: $VER
 - Linux version: $LINUX_VER
 - Defconfig: $DEFCONFIG
 - Build date: $DATE

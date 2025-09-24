@@ -50,7 +50,7 @@ else
 fi
 
 # Ask user if they want to continue to kernel patching
-read -p "Do you want to patch kernel with SuSFS? [y/N]: " CONTINUE_PATCH
+read -p "Do you want to patch kernel with SUSFS? [y/N]: " CONTINUE_PATCH
     if [[ ! "$CONTINUE_PATCH" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
         echo "Exiting."
         exit 0
