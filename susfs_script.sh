@@ -56,6 +56,15 @@ read -p "Do you want to patch kernel with SuSFS? [y/N]: " CONTINUE_PATCH
         exit 0
     fi
 
+# Ask user whether kernel has KernelSU hooks or not
+read -p "Does your kernel already have KernelSU hooks? [y/N]: " HAS_HOOKS
+if [[ "$HAS_HOOKS" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+    echo "Okay, continuing."
+else
+    echo "You need to manually add KernelSU hooks to your kernel first. Exiting."
+    exit 1
+fi
+
 # Clone the SUSFS repo for kernel 4.14
 echo "Cloning SUSFS repository..."
 git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.14
