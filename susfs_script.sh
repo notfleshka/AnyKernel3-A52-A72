@@ -5,40 +5,54 @@ LOGFILE="susfs_log.txt"
 # Start logging
 exec > >(tee -a "$LOGFILE") 2>&1
 
-echo "===== SUSFS + KernelSU-Next Script made by ChatGPT :D and fixed by notfleshka @ telegram ====="
+echo "===== KSU-Based Root Solutions + SuSFS Installation Script made by ChatGPT :D and fixed by notfleshka @ telegram ====="
 echo "===== Started at $(date) ====="
 
-# 1. Run the KernelSU-Next setup script
-echo "[1/8] Running KernelSU-Next setup..."
-curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+# Select KSU solution
+echo "Select KSU solution to use:"
+echo "1) KernelSU by rsuntk (recommended)"
+echo "2) KernelSU-Next"
+echo "3) SukiSU Ultra (not recommended)"
+read -p "Enter choice [1-3]: " KSU_CHOICE
 
-# 2. Enter the KernelSU-Next directory
-echo "[2/8] Entering KernelSU-Next directory..."
-cd KernelSU-Next || { echo "KernelSU-Next directory not found! Exiting."; exit 1; }
+case "$KSU_CHOICE" in
+    1)
+        echo "Running KernelSU by rsuntk setup..."
+        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-legacy
+        ;;
+    2|"")
+        echo "Running KernelSU-Next setup..."
+        curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+        echo "Entering KernelSU-Next directory..."
+        cd KernelSU-Next || { echo "KernelSU-Next directory not found! Exiting."; exit 1; }
+        echo "Downloading SUSFS patch..."
+        curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/KernelSU-Next/KernelSU-Next/commit/3125c35dcfdf4ccadf3fe58b5dbc584c6bb54233.patch
+        echo "Applying SUSFS patch..."
+        patch -p1 < 0001-Kernel-Implement-SUSFS.patch
+        echo "Returning to parent directory..."
+        cd ..
+        ;;
+    3)
+        echo "Running SukiSU Ultra setup..."
+        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+        ;;
+    *)
+        echo "Invalid choice. Exiting."
+        exit 1
+        ;;
+esac
 
-# 3. Download SUSFS patch
-echo "[3/8] Downloading SUSFS patch..."
-curl -o 0001-Kernel-Implement-SUSFS.patch https://github.com/KernelSU-Next/KernelSU-Next/commit/3125c35dcfdf4ccadf3fe58b5dbc584c6bb54233.patch
-
-# 4. Apply SUSFS patch
-echo "[4/8] Applying SUSFS patch..."
-patch -p1 < 0001-Kernel-Implement-SUSFS.patch
-
-# 5. Back to kernel source directory
-echo "[5/8] Returning to parent directory..."
-cd ..
-
-# 6. Clone the SUSFS repo for kernel 4.14
-echo "[6/8] Cloning SUSFS repository..."
+# Clone the SUSFS repo for kernel 4.14
+echo "Cloning SUSFS repository..."
 git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.14
 
-# 7. Copy SUSFS patches to the kernel directory
-echo "[7/8] Copying SUSFS patches..."
+# Copy SUSFS patches to the kernel directory
+echo "Copying SUSFS patches..."
 cp -v susfs4ksu/kernel_patches/fs/* fs
 cp -v susfs4ksu/kernel_patches/include/linux/* include/linux
 
-# 8. Apply the additional SUSFS patch
-echo "[8/8] Applying additional SUSFS patch..."
+# Apply the additional SUSFS patch
+echo "Applying additional SUSFS patch..."
 cp -v susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch .
 patch -p1 < 50_add_susfs_in_kernel-4.14.patch
 
