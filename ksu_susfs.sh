@@ -15,7 +15,8 @@ if [[ "$INSTALL_KSU" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
     echo "Select KSU solution to use:"
     echo "1) KernelSU by rsuntk (recommended)"
     echo "2) KernelSU-Next"
-    echo "3) SukiSU Ultra (not recommended)"
+    echo "3) SukiSU Ultra (susfs-main, not recommended)"
+    echo "4) SukiSU Ultra (non-gki branch + susfs patching, not recommended)"
     read -p "Enter choice [1-3]: " KSU_CHOICE
 
     case "$KSU_CHOICE" in
@@ -23,7 +24,7 @@ if [[ "$INSTALL_KSU" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
             echo "Running KernelSU by rsuntk setup..."
             curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s susfs-legacy
             ;;
-        2|"")
+        2)
             echo "Running KernelSU-Next setup..."
             curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
             echo "Entering KernelSU-Next directory..."
@@ -36,8 +37,20 @@ if [[ "$INSTALL_KSU" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
             cd ..
             ;;
         3)
-            echo "Running SukiSU Ultra setup..."
+            echo "Running SukiSU Ultra(susfs-main) setup..."
             curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+            ;;
+        4)
+            echo "Running SukiSU Ultra(non-gki branch) setup..."
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
+            echo "Entering SukiSU-Ultra directory..."
+            cd SukiSU-Ultra || { echo "SukiSU-Ultra directory not found! Exiting."; exit 1; }
+            echo "Downloading SUSFS patch..."
+            wget https://gitlab.com/simonpunk/susfs4ksu/-/raw/kernel-4.14/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch
+            echo "Applying SUSFS patch..."
+            patch -p1 < 10_enable_susfs_for_ksu.patch
+            echo "Returning to parent directory..."
+            cd ..
             ;;
         *)
             echo "Invalid choice. Exiting."
