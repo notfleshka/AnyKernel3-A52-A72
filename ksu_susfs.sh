@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOGFILE="susfs_log.txt"
+LOGFILE="ksu_susfs.txt"
 
 # Start logging
 exec > >(tee -a "$LOGFILE") 2>&1
