@@ -4,13 +4,13 @@
 
 **This repo now includes everything needed to build kernel.**
 
+**`setup.sh` is setup script, run it once after cloning into kernel's source to copy extra configs, copy build script, apply Android 16 AOSP patch, add KSU and SUSFS.**
+
 **`build.sh` is build script, it's configuration is in the script.**
 
-**`ksu_susfs.sh` is a script to implement KernelSU with SUSFS support.**
+**`ksu.config`, `apatch.config` and `cert.config` are extra configuration files with parameters needed for some modifications functionality.**
 
-**`ksu.config`, `apatch.config` and `cert.config` are configuration files with parameters needed for some modifications functionality.**
-
-**`a16-support.patch` is a patch needed for Android 16 support. To implement run: `patch -p1 < a16-support.patch` in kernel's root folder.**
+**`a16-support.patch` is a patch needed for Android 16 support.**
 
 **Below is the default AnyKernel3 documentation.**
 
