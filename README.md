@@ -1,20 +1,18 @@
 # What is this?
 
-**It is an universal AnyKernel3 template for Samsung Galaxy A52 and A72 devices. It will most likely work for all kernels for these devices, maybe even for other devices, but not tested. Below is a default AnyKernel3 documentation.**
+**It is an universal AnyKernel3 template for Samsung Galaxy A52 and A72 devices. It will most likely work for all kernels for these devices, maybe even for other devices, but not tested.**
 
-**UPD: Now this also includes build script for kernel, all configs are inside the script. Just put the `build.sh` inside kernel's source, modify configs to your needs and run the script. Simple as that.**
+**This repo now includes everything needed to build kernel.**
 
-**UPD2: Some people asked how do I add APatch support to Samsung kernels, now in this repo there is an `apatch_defconfig` file which has kernel settings needed for disabling Samsung securities which makes APatch work(not in all cases tho!!).**
+**`build.sh` is build script, it's configuration is in the script.**
 
-**UPD3: I added patch needed to support android 16, it should work on every kernel. To apply it, put the `a16-support.patch` file in the root directory of kernel's sources and write this command:**
+**`ksu_susfs.sh` is a script to implement KernelSU with SUSFS support.**
 
-```patch -p1 < a16-support.patch```
+**`ksu.config`, `apatch.config` and `cert.config` are configuration files with parameters needed for some modifications functionality.**
 
+**`a16-support.patch` is a patch needed for Android 16 support. To implement run: `patch -p1 < a16-support.patch` in kernel's root folder.**
 
-**UPD4: I have added KSU + SuSFS implementation script, to run it, put the `ksu_susfs.sh` in the root directory of kernel's sources and write these commands:**
-
-```chmod +x ksu_susfs.sh```
-```./ksu_susfs.sh```
+**Below is the default AnyKernel3 documentation.**
 
 ----------------------------------------------------------------------------------
 AnyKernel3 - Flashable Zip Template for Kernel Releases with Ramdisk Modifications
