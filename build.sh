@@ -6,6 +6,31 @@
 # Copyright (C) 2022-2025 Flopster101 (rewrite)
 # Copyright (C) 2025 notfleshka (modifications)
 
+# Main Variables
+KERNEL_NAME=""    # Kernel's name
+KERNEL_VER=""     # Kernel's version
+BUILD_HOST=""     # Build host name
+EXTRA_NOTES=""    # Extra notes to add to the zip name
+EXTRA_CONFIGS=()  # Extra config files to apply
+# EXTRA_CONFIGS+=("vendor/ksu.config") # Example
+# EXTRA_CONFIGS+=("vendor/apatch.config") # Example
+# EXTRA_CONFIGS+=("vendor/cert.config") # Example
+OUT_IMAGE="out/arch/arm64/boot/Image.gz"  # Kernel image path
+# OUT_IMAGE="out/arch/arm64/boot/Image.gz-dtb"  # Rarely used alternative kernel image path
+OUT_DTBO="out/arch/arm64/boot/dts/qcom/atoll-ab-idp.dtb" # DTBO path
+USE_CCACHE=1  # Use ccache? 1 - yes, 0 - no
+DO_CLEANUP=1 # Cleanup after build? 1 - yes, 0 - no
+DO_CLEAN=1 # Clean build? 1 - yes, 0 - no
+DO_MENUCONFIG=0 # Use Menuconfig? 1 - yes, 0 - no
+DO_REGEN=0 # Regenerate defconfig? 1 - yes, 0 - no
+DO_FLTO=0 # Full LTO? 1 - yes, 0 - no
+DO_A52Q=0 # Use Galaxy A52 defconfig? 1 - yes, 0 - no
+DO_A72Q=0 # Use Galaxy A72 defconfig? 1 - yes, 0 - no
+LOG_UPLOAD=0 # Upload log to bashupload.com? 1 - yes, 0 - no
+# LINKER="ld.lld" # Linker to use
+CLANG_TYPE="rm69" # Toolchain type: aosp, sdclang, proton, rm69, lolz, greenforce, zyc, rv, custom
+
+
 ## Variables
 # Toolchains
 AOSP_REPO="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/refs/heads/master"
@@ -52,15 +77,14 @@ if [[ ! -d drivers ]]; then
 fi
 
 if [[ "$IS_GP" == "1" ]]; then
-    export KBUILD_BUILD_USER="notfleshka"
-    export KBUILD_BUILD_HOST="notfleshka"
+    export KBUILD_BUILD_USER="$BUILD_HOST"
+    export KBUILD_BUILD_HOST="$BUILD_HOST"
 fi
 
 # Other
 # KERNEL_URL=""
 SECONDS=0 # builtin bash timer
 DATE="$(date '+%Y%m%d-%H%M')"
-BUILD_HOST="notfleshka"
 # Paths
 SD_DIR="$WP/sdclang"
 AC_DIR="$WP/aospclang"
@@ -75,39 +99,7 @@ ZC_DIR="$WP/zycclang"
 RV_DIR="$WP/rvclang"
 KDIR="$(readlink -f .)"
 USE_GCC_BINUTILS="0"
-# IN SOME CASES KERNELS USE DIFFERENT IMAGES SCRIPT 
-OUT_IMAGE="out/arch/arm64/boot/Image.gz"
-# OUT_IMAGE="out/arch/arm64/boot/Image.gz-dtb"
-OUT_DTBO="out/arch/arm64/boot/dts/qcom/atoll-ab-idp.dtb"
 
-## Customizable vars
-
-# Kernel Name
-KERNEL_NAME=""
-
-# Kernel version
-VER=""
-
-# Additional notes to add to the zip name
-EXTRA_NOTES=""
-
-# Toggles
-USE_CCACHE=1
-
-## Parse arguments
-DO_CLEANUP=1
-DELETE_LEFTOVERS=1
-DO_CLEAN=1
-DO_MENUCONFIG=0
-IS_RELEASE=0
-DO_REGEN=0
-DO_BASHUP=0
-DO_FLTO=0
-DO_A52Q=0
-DO_A72Q=0
-TEST_CHANNEL=1
-TEST_BUILD=1
-LOG_UPLOAD=0
 
 for arg in "$@"; do
     if [[ "$arg" == *m* ]]; then
@@ -117,14 +109,6 @@ for arg in "$@"; do
     if [[ "$arg" == *c* ]]; then
         echo "INFO: Clean build enabled"
         DO_CLEAN=1
-    fi
-    if [[ "$arg" == *R* ]]; then
-        echo "INFO: Release build enabled"
-        IS_RELEASE=1
-    fi
-    if [[ "$arg" == *o* ]]; then
-        echo "INFO: Bashupload upload enabled"
-        DO_BASHUP=1
     fi
     if [[ "$arg" == *r* ]]; then
         echo "INFO: Config regeneration mode"
@@ -161,46 +145,23 @@ fi
 
 DEFCONFIG="$DEFAULT_DEFCONFIG"
 
-if [[ "$IS_RELEASE" == "1" ]]; then
-    BUILD_TYPE="Release"
-else
-    echo "INFO: Build marked as testing"
-    BUILD_TYPE="Testing"
-fi
-
-
-
-
-# Pick aosp, proton, rm69, lolz, slim, greenforce, zyc, rv, custom
-if [[ -z "$CLANG_TYPE" ]]; then
-    CLANG_TYPE="rm69"
-else
-    echo -e "\nINFO: Overriding default toolchain"
-fi
-
-## Info message
-LINKER="ld.lld"
-
 
 ## Build type
 LINUX_VER=$(make kernelversion 2>/dev/null)
 
-if [[ "$IS_RELEASE" == "1" ]]; then
-    BUILD_TYPE="Release"
-else
-    BUILD_TYPE="Testing"
-fi
-
-ZIP_PATH="$WP/$KERNEL_NAME-$CODENAME-$VER-$EXTRA_NOTES-$DATE.zip"
+ZIP_PATH="$WP/$KERNEL_NAME-$CODENAME-$KERNEL_VER-$EXTRA_NOTES-$DATE.zip"
 
 echo -e "\nINFO: Build info:
 - Device: $DEVICE ($CODENAME)
 - Kernel Name: $KERNEL_NAME
-- Kernel Version: $VER
+- Kernel Version: $KERNEL_VER
+= Notes: $EXTRA_NOTES
+- Extra configs: ${EXTRA_CONFIGS[*]:-None}
 - Linux version: $LINUX_VER
 - Defconfig: $DEFCONFIG
 - Build date: $DATE
 - Build type: $BUILD_TYPE
+- Clang type: $CLANG_TYPE
 - Clean build: $([ "$DO_CLEAN" -eq 1 ] && echo "Yes" || echo "No")
 "
 
@@ -482,21 +443,6 @@ install_deps_deb
 get_toolchain "$CLANG_TYPE"
 prep_toolchain "$CLANG_TYPE"
 
-## Telegram info variables
-
-# CAPTION_BUILD="Build info:
-# *Device*: \`${DEVICE} [${CODENAME}]\`
-# *Kernel Version*: \`${LINUX_VER}\`
-# *Compiler*: \`${KBUILD_COMPILER_STRING}\`
-# *Linker*: \`$("${LINKER}" -v | head -n1 \
-#      | sed -E 's/\([^)]*\)//g; s/  */ /g; s/^ //; s/ $//')\`
-# *Build host*: \`${BUILD_HOST}\`
-# *Branch*: \`$(git rev-parse --abbrev-ref HEAD)\`
-# *Commit*: [($(git rev-parse HEAD | cut -c -7))]($(echo $KERNEL_URL)/commit/$(git rev-parse HEAD))
-# *Build type*: \`$BUILD_TYPE\`
-# *Clean build*: \`$([ "$DO_CLEAN" -eq 1 ] && echo Yes || echo No)\`
-# "
-
 
 prep_build() {
     ## Prepare ccache
@@ -519,10 +465,10 @@ build() {
     export ARCH=arm64
     mkdir -p out
 
-    make O=out ARCH=arm64 "$DEFCONFIG" ${EXTRA_CONFIGS[*]} 2>&1 | tee log.txt
+    make O=out ARCH=arm64 "$DEFCONFIG" "${EXTRA_CONFIGS[@]}" 2>&1 | tee log.txt
 
     # Delete leftovers
-    if [[ "$DELETE_LEFTOVERS" == "1" ]]; then 
+    if [[ "$DO_CLEANUP" == "1" ]]; then
         echo -e "INFO: Deleting leftovers"
         rm -f out/arch/arm64/boot/Image*
         rm -f out/arch/arm64/boot/dtbo*
@@ -549,7 +495,7 @@ build() {
     echo -e "\nINFO: Starting compilation...\n"
 
     if [[ "$USE_CCACHE" == "1" ]]; then
-        make -j$(nproc --all) O=out \
+        make -j"$(nproc --all)" O=out \
         CC="ccache clang" \
         CROSS_COMPILE="$CCARM64_PREFIX" \
         CROSS_COMPILE_ARM32="$CCARM_PREFIX" \
@@ -566,7 +512,7 @@ build() {
         HOSTNM="llvm-nm" \
         LD="ld.lld" 2>&1 | tee log.txt
     else
-        make -j$(nproc --all) O=out \
+        make -j"$(nproc --all)" O=out \
         CC="clang" \
         CROSS_COMPILE="$CCARM64_PREFIX" \
         CROSS_COMPILE_ARM32="$CCARM_PREFIX" \
@@ -615,10 +561,10 @@ post_build() {
     rm -f *zip
 
     ## Prepare kernel flashable zip
-    cd "$AK3_DIR"
+    cd "$AK3_DIR" || { echo "ERROR: Failed to cd to $AK3_DIR"; exit 1; }
     git checkout "$AK3_BRANCH" &> /dev/null
     zip -r9 "$ZIP_PATH" * -x '*.git*' README.md *placeholder
-    cd ..
+    cd .. || { echo "ERROR: Failed to cd .. after zipping"; exit 1; }
     rm -rf "$AK3_DIR"
     echo -e "\nINFO: Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
     echo "Zip: $ZIP_PATH"
@@ -628,22 +574,12 @@ post_build() {
     else
         rm -rf "$AK3_DIR"
     fi
-    cd "$KDIR"
 }
 
 upload() {
-    if [[ "$DO_BASHUP" == "1" ]]; then
-    echo -e "\nINFO: Uploading to bashupload.com...\n"
-    curl -T "$ZIP_PATH" bashupload.com; echo
-    fi
-
     if [[ "$LOG_UPLOAD" == "1" ]]; then
         echo -e "\nINFO: Uploading log to bashupload.com\n"
         curl -T log.txt bashupload.com
-    fi
-    # Delete any leftover zip files
-    if [[ "$DO_CLEANUP" == "1" ]]; then
-        rm -f "$WP/$KERNEL_NAME*zip"
     fi
 }
 
