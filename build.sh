@@ -495,7 +495,7 @@ build() {
     echo -e "\nINFO: Starting compilation...\n"
 
     if [[ "$USE_CCACHE" == "1" ]]; then
-        make -j"$(nproc --all)" O=out \
+        make -j$(nproc --all) O=out \
         CC="ccache clang" \
         CROSS_COMPILE="$CCARM64_PREFIX" \
         CROSS_COMPILE_ARM32="$CCARM_PREFIX" \
@@ -512,7 +512,7 @@ build() {
         HOSTNM="llvm-nm" \
         LD="ld.lld" 2>&1 | tee log.txt
     else
-        make -j"$(nproc --all)" O=out \
+        make -j$(nproc --all) O=out \
         CC="clang" \
         CROSS_COMPILE="$CCARM64_PREFIX" \
         CROSS_COMPILE_ARM32="$CCARM_PREFIX" \
@@ -561,10 +561,10 @@ post_build() {
     rm -f *zip
 
     ## Prepare kernel flashable zip
-    cd "$AK3_DIR" || { echo "ERROR: Failed to cd to $AK3_DIR"; exit 1; }
+    cd "$AK3_DIR" || { echo "ERROR: Failed to cd to $AK3_DIR"; }
     git checkout "$AK3_BRANCH" &> /dev/null
     zip -r9 "$ZIP_PATH" * -x '*.git*' README.md *placeholder
-    cd .. || { echo "ERROR: Failed to cd .. after zipping"; exit 1; }
+    cd .. || { echo "ERROR: Failed to cd .. after zipping"; }
     rm -rf "$AK3_DIR"
     echo -e "\nINFO: Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
     echo "Zip: $ZIP_PATH"
@@ -574,6 +574,7 @@ post_build() {
     else
         rm -rf "$AK3_DIR"
     fi
+    cd "$KDIR"
 }
 
 upload() {
