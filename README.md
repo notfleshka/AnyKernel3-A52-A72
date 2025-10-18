@@ -4,6 +4,8 @@
 
 **This repo now includes everything needed to build kernel.**
 
+`wget https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/setup.sh && chmod +x setup.sh && ./setup.sh`
+
 **`setup.sh` is setup script, run it once after cloning into kernel's source to copy extra configs, copy build script, apply Android 16 AOSP patch, add KSU and SUSFS.**
 
 **`build.sh` is build script, it's configuration is in the script.**
