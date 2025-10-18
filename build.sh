@@ -465,7 +465,7 @@ build() {
     export ARCH=arm64
     mkdir -p out
 
-    make O=out ARCH=arm64 "$DEFCONFIG" "${EXTRA_CONFIGS[@]}" 2>&1 | tee log.txt
+    make O=out ARCH=arm64 "$DEFCONFIG" ${EXTRA_CONFIGS[*]} 2>&1 | tee log.txt
 
     # Delete leftovers
     if [[ "$DO_CLEANUP" == "1" ]]; then
