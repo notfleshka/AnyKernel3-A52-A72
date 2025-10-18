@@ -74,8 +74,26 @@ read -p "Does your kernel already have KernelSU hooks? [y/N]: " HAS_HOOKS
 if [[ "$HAS_HOOKS" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
     echo "Okay, continuing."
 else
-    echo "You need to manually add KernelSU hooks to your kernel first. Exiting."
-    exit 1
+    echo "Attempting to download and add KernelSU hooks..."
+    # Try to download patch
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -o ksu-hooks.patch "https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/ksu-hooks.patch" || { echo "Failed to download with curl."; }
+    else
+        echo "Failed. Exiting.";
+        exit 1
+    fi
+
+    echo "Applying KernelSU hooks..."
+    patch -p1 < ksu-hooks.patch
+
+    # Ask user to confirm whether patch applied cleanly
+    read -p "Did it patch without any conflicts? [y/N]: " PATCH_OK
+    if [[ "$PATCH_OK" =~ ^([Yy]|[Yy][Ee][Ss])$ ]]; then
+        echo "Patch applied successfully. Continuing..."
+    else
+        echo "Please resolve them manually, then re-run the script. Exiting."
+        exit 1
+    fi
 fi
 
 # Clone the SUSFS repo for kernel 4.14
@@ -87,10 +105,15 @@ echo "Copying SUSFS patches..."
 cp -v susfs4ksu/kernel_patches/fs/* fs
 cp -v susfs4ksu/kernel_patches/include/linux/* include/linux
 
-# Apply the additional SUSFS patch
-echo "Applying additional SUSFS patch..."
-cp -v susfs4ksu/kernel_patches/50_add_susfs_in_kernel-4.14.patch .
-patch -p1 < 50_add_susfs_in_kernel-4.14.patch
+# Apply the SUSFS integration patch
+echo "Applying SUSFS integration patch..."
+if command -v curl >/dev/null 2>&1; then
+    curl -fsSL -o susfs.patch "https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/susfs.patch" || { echo "Failed to curl."; }
+else
+    echo "Failed. Exiting.";
+    exit 1
+fi
+patch -p1 < susfs.patch
 
 echo "Most likely there are conflicts(dont worry, they are almost always present), check $LOGFILE and make sure to resolve them manually."
 echo "===== Finished at $(date) ====="

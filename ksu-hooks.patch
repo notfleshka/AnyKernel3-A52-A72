@@ -1,0 +1,274 @@
+From d62ab533ed2038babd94253f0fb5f150d09147e6 Mon Sep 17 00:00:00 2001
+From: notfleshka <68151625+notfleshka@users.noreply.github.com>
+Date: Wed, 15 Oct 2025 15:53:56 +0300
+Subject: [PATCH] KSU hooks
+
+---
+ drivers/input/input.c | 10 ++++++++++
+ fs/devpts/inode.c     |  8 ++++++++
+ fs/exec.c             | 15 +++++++++++++++
+ fs/internal.h         |  1 +
+ fs/namespace.c        | 34 ++++++++++++++++++++++++++++++++++
+ fs/open.c             |  9 +++++++++
+ fs/read_write.c       | 11 +++++++++++
+ fs/stat.c             |  8 ++++++++
+ include/linux/cred.h  | 11 +++++++++++
+ kernel/cred.c         |  2 +-
+ 10 files changed, 108 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/input.c b/drivers/input/input.c
+index 8b24574fe..b3522d085 100755
+--- a/drivers/input/input.c
++++ b/drivers/input/input.c
+@@ -379,11 +379,21 @@ static int input_get_disposition(struct input_dev *dev,
+ 	return disposition;
+ }
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_input_hook __read_mostly;
++extern int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code, int *value);
++#endif
++
+ static void input_handle_event(struct input_dev *dev,
+ 			       unsigned int type, unsigned int code, int value)
+ {
+ 	int disposition = input_get_disposition(dev, type, code, &value);
+ 
++	#ifdef CONFIG_KSU
++	if (unlikely(ksu_input_hook))
++		ksu_handle_input_handle_event(&type, &code, &value);
++	#endif
++
+ 	if (disposition != INPUT_IGNORE_EVENT && type != EV_SYN)
+ 		add_input_randomness(type, code, value);
+ 
+diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
+index 32f6f1c68..f22daa082 100755
+--- a/fs/devpts/inode.c
++++ b/fs/devpts/inode.c
+@@ -602,6 +602,10 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
+ 	return dentry;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_devpts(struct inode*);
++#endif
++
+ /**
+  * devpts_get_priv -- get private data for a slave
+  * @pts_inode: inode of the slave
+@@ -610,6 +614,10 @@ struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
+  */
+ void *devpts_get_priv(struct dentry *dentry)
+ {
++	#ifdef CONFIG_KSU
++    ksu_handle_devpts(dentry->d_inode);
++    #endif
++	
+ 	if (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
+ 		return NULL;
+ 	return dentry->d_fsdata;
+diff --git a/fs/exec.c b/fs/exec.c
+index 025523ff6..3b72ecfa1 100755
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1860,6 +1860,14 @@ static int exec_binprm(struct linux_binprm *bprm)
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_execveat_hook __read_mostly;
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
++			void *envp, int *flags);
++extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
++				void *argv, void *envp, int *flags);
++#endif
++
+ /*
+  * sys_execve() executes a new program.
+  */
+@@ -1874,6 +1882,13 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	struct files_struct *displaced;
+ 	int retval;
+ 
++	#ifdef CONFIG_KSU
++	if (unlikely(ksu_execveat_hook))
++		ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
++	else
++		ksu_handle_execveat_sucompat(&fd, &filename, &argv, &envp, &flags);
++	#endif
++
+ 	if (IS_ERR(filename))
+ 		return PTR_ERR(filename);
+ 
+diff --git a/fs/internal.h b/fs/internal.h
+index e7cdf5f4b..db11c7c0b 100755
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -76,6 +76,7 @@ extern int finish_automount(struct vfsmount *, struct path *);
+ extern int sb_prepare_remount_readonly(struct super_block *);
+ 
+ extern void __init mnt_init(void);
++int path_umount(struct path *path, int flags);
+ 
+ extern int __mnt_want_write(struct vfsmount *);
+ extern int __mnt_want_write_file(struct file *);
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 505724a33..b51eb6655 100755
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2178,6 +2178,40 @@ static inline bool may_mandlock(void)
+ }
+ #endif
+ 
++static int can_umount(const struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++
++	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
++		return -EINVAL;
++	if (!may_mount())
++		return -EPERM;
++	if (path->dentry != path->mnt->mnt_root)
++		return -EINVAL;
++	if (!check_mnt(mnt))
++		return -EINVAL;
++//	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
++//		return -EINVAL;
++	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
++		return -EPERM;
++	return 0;
++}
++
++int path_umount(struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++	int ret;
++
++	ret = can_umount(path, flags);
++	if (!ret)
++		ret = do_umount(mnt, flags);
++
++	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
++	dput(path->dentry);
++	mntput_no_expire(mnt);
++	return ret;
++}
++
+ /*
+  * Now umount can handle mount points as well as block devices.
+  * This is important for filesystems which use unnamed block devices.
+diff --git a/fs/open.c b/fs/open.c
+index df3f23388..f6e353fbe 100755
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -358,6 +358,11 @@ SYSCALL_DEFINE4(fallocate, int, fd, int, mode, loff_t, offset, loff_t, len)
+ 	return error;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
++			    	int *flags);
++#endif
++
+ /*
+  * access() needs to use the real uid/gid, not the effective uid/gid.
+  * We do this by temporarily clearing all FS-related capabilities and
+@@ -373,6 +378,10 @@ SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
+ 	int res;
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+ 
++	#ifdef CONFIG_KSU
++	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
++	#endif
++
+ 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+ 		return -EINVAL;
+ 
+diff --git a/fs/read_write.c b/fs/read_write.c
+index c8413aad5..fbb65a570 100755
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -437,10 +437,21 @@ ssize_t kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
+ }
+ EXPORT_SYMBOL(kernel_read);
+ 
++#ifdef CONFIG_KSU
++extern bool ksu_vfs_read_hook __read_mostly;
++extern int ksu_handle_vfs_read(struct file **file_ptr, char __user **buf_ptr,
++			size_t *count_ptr, loff_t **pos);
++#endif
++
+ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+ {
+ 	ssize_t ret;
+ 
++	#ifdef CONFIG_KSU 
++	if (unlikely(ksu_vfs_read_hook))
++		ksu_handle_vfs_read(&file, &buf, &count, &pos);
++	#endif
++
+ 	if (!(file->f_mode & FMODE_READ))
+ 		return -EBADF;
+ 	if (!(file->f_mode & FMODE_CAN_READ))
+diff --git a/fs/stat.c b/fs/stat.c
+index 0fda4b6b8..8ce03a9d5 100755
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -148,6 +148,10 @@ int vfs_statx_fd(unsigned int fd, struct kstat *stat,
+ }
+ EXPORT_SYMBOL(vfs_statx_fd);
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
++#endif
++
+ /**
+  * vfs_statx - Get basic and extra attributes by filename
+  * @dfd: A file descriptor representing the base dir for a relative filename
+@@ -170,6 +174,10 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
+ 	int error = -EINVAL;
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
+ 
++	#ifdef CONFIG_KSU
++	ksu_handle_stat(&dfd, &filename, &flags);
++	#endif
++
+ 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
+ 		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
+ 		return -EINVAL;
+diff --git a/include/linux/cred.h b/include/linux/cred.h
+index 7bceabd4a..61915a380 100755
+--- a/include/linux/cred.h
++++ b/include/linux/cred.h
+@@ -323,6 +323,17 @@ static inline const struct cred *get_cred(const struct cred *cred)
+ 	return get_new_cred(nonconst_cred);
+ }
+ 
++static inline const struct cred *get_cred_rcu(const struct cred *cred)
++{
++	struct cred *nonconst_cred = (struct cred *) cred;
++	if (!cred)
++		return NULL;
++	if (!atomic_inc_not_zero(&nonconst_cred->usage))
++		return NULL;
++	validate_creds(cred);
++	return cred;
++}
++
+ /**
+  * put_cred - Release a reference to a set of credentials
+  * @cred: The credentials to release
+diff --git a/kernel/cred.c b/kernel/cred.c
+index 424f4580a..a116cef88 100755
+--- a/kernel/cred.c
++++ b/kernel/cred.c
+@@ -319,7 +319,7 @@ const struct cred *get_task_cred(struct task_struct *task)
+ 	do {
+ 		cred = __task_cred((task));
+ 		BUG_ON(!cred);
+-	} while (!atomic_inc_not_zero(&((struct cred *)cred)->usage));
++	} while (!get_cred_rcu(cred));
+ #endif
+ 
+ 	rcu_read_unlock();
