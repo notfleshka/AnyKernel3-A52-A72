@@ -25,6 +25,7 @@ echo "Copying configs..."
 wget -q -O "$VENDOR_DIR/apatch.config" https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/apatch.config
 wget -q -O "$VENDOR_DIR/cert.config" https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/cert.config
 wget -q -O "$VENDOR_DIR/ksu.config" https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/ksu.config
+wget -q -O "$VENDOR_DIR/securities.config" https://raw.githubusercontent.com/notfleshka/AnyKernel3-A52-A72/refs/heads/master/securities.config
 
 # Copy build script
 echo "Copying build script..."
