@@ -161,7 +161,6 @@ echo -e "\nINFO: Build info:
 - Linux version: $LINUX_VER
 - Defconfig: $DEFCONFIG
 - Build date: $DATE
-- Build type: $BUILD_TYPE
 - Clang type: $CLANG_TYPE
 - Clean build: $([ "$DO_CLEAN" -eq 1 ] && echo "Yes" || echo "No")
 "
